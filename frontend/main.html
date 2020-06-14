@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balaji Twitter Exporter</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+    <div>
+        <h3>Consumer Token</h3>
+        <input id="consumerToken" />
+
+        <h3>Consumer Secret</h3>
+        <input id="consumerSecret" />
+
+        <h3>Access Token</h3>
+        <input id="accessToken" />
+
+        <h3>Access Secret</h3>
+        <input id="accessSecret" />
+
+        <h3>Account Name</h3>
+        <input id="twitterHandle" />
+
+        <button onClick="sendAPIKeys()">Send API Key & Log In</button>
+        <h3 id="warning"></h3>
+    </div>
+
+    <div>
+    </div>
+
+    <div>
+        <h1>Retrieved number of Twitter followers</h1>
+        <h3 id="followerCount">Awaiting value from server...</h3>
+
+        <p>Note: Followers are ranked by follower count. Your most popular followers will be messaged first.</p>
+    </div>
+
+    <div>
+        <h1>Send your followers a message</h1>
+        <textarea id="message" rows="4" cols="50" onchange="updateMessage()"
+            placeholder="Message your followers..."></textarea>
+        <button onClick="sendMessage()">Send</button>
+    </div>
+</body>
+
+</html>
