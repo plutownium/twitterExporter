@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Email Capture Form</title>
+    <script src="emailCaptureScript.js" defer></script>
+</head>
+
+<body>
+
+    <h1>Customize Your Landing Page</h1>
+
+    <div id="loadCustomElementsHere">
+        <!-- for each click of the "Load New Text Box" button, give user a new text box. -->
+        <div id="exampleHeaderTag">
+            <input id="testInput" onchange="convertInputToLoadedText()" />
+            <h1 id="testHeader"></h1>
+            <button onclick="removeCurrentHeaderTag()">Remove Header</button>
+        </div>
+
+        <div id="exampleParagraph">
+            <input id="testInput" onchange="convertInputToLoadedText()" />
+            <p id="loadInputTextHere"></p>
+            <button onclick="removeCurrentTextBox()">Remove Text Box</button>
+        </div>
+    </div>
+
+    <div id="customLandingPageControlCenter">
+        <button onclick="addTextBox()">Load New Text Box</button>
+
+    </div>
+
+    <div id="followerInputForm">
+        <!-- this is where the user's twitter follower inputs his email and phone number -->
+        <div>
+            <input id="emailCapture" />
+            <input id="phoneNumberCapture" />
+            <button onclick="submitForm()">Submit Form</button>
+        </div>
+
+        <div>
+            <p id="displayResponseToFollower"></p>
+        </div>
+
+    </div>
+</body>
+
+</html>
