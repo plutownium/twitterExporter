@@ -21,8 +21,8 @@ MESSAGE_DELAY = 91  # recommend keeping this at 90 or greater (or else the daily
 # how would I do that... how long would it take per account... hmm...
 
 
-def rank_by_activity_bio_and_language(input_list, activity=True, bio=False, lang=False, crypto=False):
-    # ### Ranks followers by activity, bio (longer is better), language,
+def rank_by_activity_and_language(input_list, activity=True, lang=False, crypto=False):
+    # ### Ranks followers by activity, language,
     # and "mentions crypto bio".
     # Also (perhaps most importantly) tries to detect if user location is in North America.
 
@@ -35,7 +35,7 @@ def detect_keywords(followers, keyword_list):
     return None
 
 
-@app.route("/send_message", methods=["GET", "POST"])
+@app.route("/send_message/ctoken/<consumer_token>/csecret/<consumer_secret>/atoken/<access_token>/asecret/<access_secret>/username/<username>/msg/<message>/", methods=["GET", "POST"])
 def message_all_followers(consumer_token, consumer_secret, access_token, access_secret, username, message):
     # ### does what it says
 
@@ -45,8 +45,6 @@ def message_all_followers(consumer_token, consumer_secret, access_token, access_
     auth.set_access_token(access_token, access_secret)
 
     api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-    # auth_url = auth.get_authorization_url()
-    # auth.set_access_token(access_token, access_secret)
 
     # retrieve user's followers
 
@@ -66,16 +64,15 @@ def message_all_followers(consumer_token, consumer_secret, access_token, access_
                 print("HI:", user.id_str, user.location)  # prints
         # what happens when we hit 'rate limit exceeded'
         except Exception as e:
-            print(e)  # TODO: test a few times and see what errors come up. is it ONLY tweepy errors?
+            print(e)  # TODO: test a few times and see what errors come up.
             time.sleep(60*16)  # 60 sec * 16 minutes, one minute longer than needed (just in case)
 
     # after assembling a list of followers, order them by .followers_count
     followers_ranked = sorted(followers, key=lambda x: x.followers_count)
 
     # enable this function to rank followers below a threshold of followers by activity
-    # followers_ranked = rank_by_activity_bio_and_language(followers_ranked,
+    # followers_ranked = rank_by_activity_and_language(followers_ranked,
     #                                                      activity=True,
-    #                                                      bio=True,
     #                                                      lang="En",
     #                                                      crypto=True)
 
@@ -89,24 +86,16 @@ def message_all_followers(consumer_token, consumer_secret, access_token, access_
     message_delay = 1.8
 
     for follower in followers_ranked:
+        print("sending msg to:", follower.id_str)
         api.send_direct_message(follower.id_str, message)
         time.sleep(60 * message_delay)
 
-    # NOTE: will the client receive a late response here? the response will come a day or even a month later...
-    resp = jsonify(success=True)
-    return resp  # todo: what to return?
+    return "Done!"  # todo: what to return?
 
 
-@app.route("/get_eta", methods=["GET"])
-def get_eta():
+@app.route("/get_eta_and_followers/ctoken/<consumer_token>/csecret/<consumer_secret>/atoken/<access_token>/asecret/<access_secret>/username/<username>/", methods=["GET"])
+def get_eta_and_followers(consumer_token, consumer_secret, access_token, access_secret, username):
     # ### route tells the client how long the process will take
-
-    # get parameters
-    consumer_token = request.args.get("consumer_token")
-    consumer_secret = request.args.get("consumer_secret")
-    access_token = request.args.get(("access_token"))
-    access_secret = request.args.get("access_secret")
-    username = request.args.get("username")
 
     # authenticate using supplied info
     auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
@@ -124,7 +113,9 @@ def get_eta():
     expected_hours = int(total_seconds / 60)  # in hours
     expected_days = int(expected_hours / 24)  # int() turns float to integer (removes decimals)
 
-    return jsonify(duration_in_hours=expected_hours, duration_in_days=expected_days)
+    return jsonify(account_followers=account_followers,
+                   duration_in_hours=expected_hours,
+                   duration_in_days=expected_days)
 
 
 # FIXME: what to do if multiple users are using this server at the same time? does the api validation conflict?
