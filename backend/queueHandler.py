@@ -31,37 +31,38 @@ def start_dms(consumer_token, consumer_secret, access_token, access_secret, user
 
     api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
-    db = firestore.Client()
-
     # ### start getting batches of 950 DMs from the firestore DB and sending them
 
-    # TODO: ANDY i don't understand how "send 950 then pause" is different from "send 1 then pause" in terms of VM usage
-    doc_ref = db.collection(u'users').document(username).collection(u'messages')
+    db = firestore.Client()
 
-    while True:  # loop as many times as it takes to get ALL the msg documents from the user's collection
-        # get 950 of the highest priority DMs
-        query = doc_ref.order_by(u'priority', direction=firestore.Query.DESCENDING).limit(950)
-        results = query.stream()
+    # NOTE: ANDY i don't understand how "send 950 then pause" is different from "send 1 then pause" in terms of VM usage
+    doc_ref = db.collection(u'users').document(username)
+    doc = doc_ref.get()
 
-        # for each result, package it into a tweepy "send DM" api call, pause for a sec, repeat
-        for result in results:
-            print(result)  # check what the "result" object contains
-            break
-            api.send_direct_message(result.recipient, result.message)  # i think it will be like this (but test still)
-            # https://developer.twitter.com/en/docs/basics/rate-limits says we can do 1000 DMs / 24 hrs
+    msg_content = ""
 
-        # delete the finished batch of DMs so the db isn't clogged with old data
-        # (and so line 42 retrieves a new batch of message docs)
-        for result in results:
-            # TODO: validate that "results" is a batch of firestore docs
-            result.delete()  # https://firebase.google.com/docs/firestore/manage-data/delete-data
+    messages_to_send = []
+    if doc.exists:
+        data = doc.to_dict()
+        msg_content = data["message"]
+        for follower in data["recipients"]:
+            messages_to_send.append(follower)
 
-        # if the query received less than 950 docs, clearly we are in the last batch of DMs; don't need to loop again
-        if len(query) < 950:
-            break
+    messages_by_priority = sorted(messages_to_send, key=lambda x: x["priority"], reverse=True)
 
-        time.sleep(24*61*60)  # sleep for just over 24 hours to avoid the "POST limit window"
+    total_msgs_sent_today = 0
+    for msg in messages_by_priority:
+        api.send_direct_message(msg["recipient"], msg_content)
+        total_msgs_sent_today += 1
+        time.sleep(1)  # seems reasonable to insert a 1 second pause between DMs to avoid rate limits or something
+
+        break  # disable this in the live version. in the demo, it prevents the script from msging ALL your followers to test the code
+
+        if total_msgs_sent_today > 949:
+            time.sleep(24 * 61 * 60)
+            total_msgs_sent_today = 0
 
 
 if __name__ == '__main__':
+    # app.run(host='127.0.0.1', port=8080)
     app.run()

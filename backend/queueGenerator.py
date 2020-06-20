@@ -46,7 +46,7 @@ def generate_and_store_dms(consumer_token, consumer_secret, access_token, access
         count += 1
         if count == 14:
             print("Sleeping for 16*60")
-            break
+            break  # todo: disable this break statement for the live version of the code
             time.sleep(60 * 16)  # avoid rate limit... 60 sec per min times 16 min
             count = 0  # reset count
         try:
@@ -63,32 +63,28 @@ def generate_and_store_dms(consumer_token, consumer_secret, access_token, access
     # after assembling a list of followers, order them by .followers_count
     followers_ranked = sorted(followers, key=lambda x: x.followers_count)
 
-    # create a list of items to post into the firestore db
-    messages = []
-
+    # create a document to post into the firestore db
     script_user = api.get_user(screen_name=username)
-
-    print("number of followers retrieved: {0}".format(len(followers_ranked)))
-    for follower in followers_ranked:  # andy I don't understand how to turn
-        # msg_to_send = Message(script_user.id, follower.id, message)
-        msg_to_send = {"sender": script_user.id,
-                       "recipient": follower.id,
+    messages = {"sender": script_user.id,
+                       "recipients": [],
                        "message": message,
-                       "priority": follower.followers_count,
                        "time-posted": datetime.datetime.now()}
-        messages.append(msg_to_send)
+
+    # fill the messages dict with followers' ids so the msgs know where to go
+    for follower in followers_ranked:
+        messages["recipients"].append({"recipient": follower.id_str, "priority": follower.followers_count})
 
     # now upload all these messages-in-potential to the firestore
     db = firestore.Client()
 
-    # print("attempting to push {0} items to the db".format(len(messages)))
+    print("attempting to push {0} items to the db".format(len(messages["recipients"])))
+
     # post the entire list of items all at once
-    for msg in messages:
-        db.collection(u'users').document(username).collection(u'messages').add(msg)
+    db.collection(u'users').document(username).set(messages)
     # print("wow it worked!")
 
     # send msg to the micro-service responsible for sending msgs telling it to start. also fwd credentials
-    app_ip_and_port = ""
+    app_ip_and_port = "http://127.0.0.1:8080"
     url_path = "/ready/" + consumer_token + "/" + consumer_secret + "/" \
                + access_token + "/" + access_secret + "/" + username
     rdy = requests.get(app_ip_and_port + url_path)
