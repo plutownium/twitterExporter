@@ -4,7 +4,7 @@ base = None
 
 executables = [Executable("localApp.py", base=base)]
 
-packages = ["idna", "tweepy", "time", "atexit", "io", "timeit", "datetime"]
+packages = ["idna", "tweepy", "time", "timeit", "datetime"]
 options = {
     'build_exe': {
         'packages': packages,
@@ -14,7 +14,7 @@ options = {
 setup(
     name = "foo",
     options = options,
-    version = "0.1",
+    version = "0.2",
     description = 'bar',
     executables = executables
 )
